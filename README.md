@@ -1,5 +1,9 @@
 # ETL-Project
 
+## Notebook part Anson
+
+![alt text](./inner_join.png 'Inner Join')
+
 ## Bonobo ETL
 
 #### Bonobo is a lightweight Extract-Transform-Load (ETL) framework for Python 3.5+.
