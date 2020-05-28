@@ -1,0 +1,15 @@
+version: '3.7'
+services:
+  pg:
+    image: 'postgres:latest'
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - '54320:5432'
+    volumes:
+      - ./postgres:/var/lib/postgresql/data/pgdata
+
+volumes:
+  postgres:
