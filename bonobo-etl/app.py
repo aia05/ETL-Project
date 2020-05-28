@@ -6,15 +6,20 @@ import sqlalchemy
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
 
-# url = 'https://restcountries.eu/rest/v2/name/united'
 url = 'https://restcountries.eu/rest/v2/all'
 
-# remove CSV file if exists.
-csv_filepath = 'test.csv'
+csv_filepath = './loaded_data/world.csv'
+
 try:
+    # remove CSV file if exists.
     os.remove(csv_filepath)
     with open(csv_filepath, 'w', newline='') as new_csv:
-        writer = csv.DictWriter(new_csv, fieldnames=["name", "capital", "region", "population", "languages"])
+        writer = csv.DictWriter(new_csv,
+                                fieldnames=[
+                                    "name", "capital", "region", "countrycode",
+                                    "capital", "region", "subregion",
+                                    "population", "languages", "flag"
+                                ])
         writer.writeheader()
 
 except:
@@ -41,45 +46,47 @@ def extract():
 
 
 def transform(data):
-    print(data)
     entry = [data['name']]
-    # keys = {'name', 'capital'}
-    # entry = { k:v for k,v in data.items() if k in keys }
+    entry.append(data['alpha3Code'])
     if data['capital'] is "":
         data['capital'] = 'NA'
     entry.append(data['capital'])
     entry.append(data['region'])
+    entry.append(data['subregion'])
     entry.append(int(data['population']))
     entry.append(data['languages'][0]['name'])
+    entry.append(data['flag'])
     yield entry
 
 
 def load_csv(entry):
-    print('load --->', entry)
-    # with open(fname, 'a+') as f:
-    #     f.write(json.dumps(entry) + '\n')
     with open(csv_filepath, 'a') as f:
-        csv_writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        csv_writer = csv.writer(f,
+                                delimiter=',',
+                                quotechar='"',
+                                quoting=csv.QUOTE_MINIMAL)
         csv_writer.writerow([*entry])
     yield entry
 
 
 def load_postgres(entry):
-    print('load postgres --->', entry)
     session = Session(engine)
-    new_country = World(name=entry[0], capital=entry[1], region=entry[2], population=entry[3], languages=entry[4])
+    new_country = World(name=entry[0],
+                        countrycode=entry[1],
+                        capital=entry[2],
+                        region=entry[3],
+                        subregion=entry[4],
+                        population=entry[5],
+                        languages=entry[6],
+                        flag=entry[7])
     session.add(new_country)
     session.commit()
 
 
 def get_graph():
     graph = bonobo.Graph()
-    graph.add_chain(extract,
-                    transform,
-                    load_csv,
-                    load_postgres,
-                    bonobo.Limit(1000),
-                    bonobo.PrettyPrinter())
+    graph.add_chain(extract, transform, load_csv, load_postgres,
+                    bonobo.Limit(1000), bonobo.PrettyPrinter())
     return graph
 
 
